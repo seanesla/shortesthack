@@ -1,0 +1,29 @@
+INFO:     Started server process [72455]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53938 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53974 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 53978) - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53974 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+🚀 Calling NVIDIA Nemotron for hardcoded_secrets analysis...
+❌ Nemotron API error: 404
+🚀 Calling NVIDIA Nemotron for hardcoded_secrets analysis...
+❌ Nemotron API error: 404
+🚀 Calling NVIDIA Nemotron for hardcoded_secrets analysis...
+❌ Nemotron API error: 404
+🚀 Calling NVIDIA Nemotron for sql_injection analysis...
+❌ Nemotron API error: 404
+🚀 Calling NVIDIA Nemotron for command_injection analysis...
+❌ Nemotron API error: 404
+🚀 Calling NVIDIA Nemotron for weak_jwt analysis...
+❌ Nemotron API error: 404
+🚀 Calling NVIDIA Nemotron for command_injection analysis...
+❌ Nemotron API error: 404
+🚀 Calling NVIDIA Nemotron for eval_usage analysis...
+❌ Nemotron API error: 404
+INFO:     127.0.0.1:53976 - "POST /demo/scan HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     Shutting down
+INFO:     Waiting for background tasks to complete. (CTRL+C to force quit)

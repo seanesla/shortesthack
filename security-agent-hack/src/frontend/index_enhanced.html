@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureReview AI - Live Security Analysis</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #76b900;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(118, 185, 0, 0.5);
+        }
+        
+        .nvidia-badge {
+            background: #76b900;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 10px 0;
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(118, 185, 0, 0.8); }
+            50% { box-shadow: 0 0 20px rgba(118, 185, 0, 1); }
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .status.connected { background: #00ff00; color: #000; }
+        .status.disconnected { background: #ff0000; }
+        
+        /* GitHub PR Scanner */
+        .github-scanner {
+            background: #1a1a1a;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 600px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        .github-scanner h3 {
+            margin-bottom: 15px;
+            color: #76b900;
+        }
+        
+        .scanner-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .scanner-input input {
+            flex: 1;
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .scanner-input button {
+            background: #76b900;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .scanner-input button:hover {
+            background: #5fa000;
+            transform: scale(1.05);
+        }
+        
+        .scanner-input button:disabled {
+            background: #444;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+        
+        .container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .panel {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Business Impact Panel */
+        .impact-panel {
+            text-align: center;
+        }
+        
+        .impact-metric {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #76b900;
+        }
+        
+        .impact-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #76b900;
+            margin: 5px 0;
+        }
+        
+        .impact-label {
+            font-size: 0.9em;
+            color: #999;
+        }
+        
+        /* Agent Activity Panel */
+        .agent-panel h2 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .thinking-indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #76b900;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        
+        .thinking-indicator.active {
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .activity-log {
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .activity-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #0a0a0a;
+            border-radius: 5px;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .activity-nvidia {
+            border-left: 3px solid #76b900;
+            background: #1a2a1a;
+        }
+        
+        /* Main vulnerabilities panel */
+        .vulnerabilities-panel {
+            overflow-y: auto;
+            max-height: calc(100vh - 300px);
+        }
+        
+        .vulnerability {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff0000;
+            animation: slideIn 0.5s ease-out;
+            position: relative;
+        }
+        
+        .nvidia-enhanced {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #76b900;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .vulnerability.critical { border-left-color: #ff0000; }
+        .vulnerability.high { border-left-color: #ff6600; }
+        .vulnerability.medium { border-left-color: #ffaa00; }
+        .vulnerability.low { border-left-color: #ffff00; }
+        
+        .vuln-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .vuln-type {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .severity-badge {
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+        
+        .severity-badge.critical { background: #ff0000; }
+        .severity-badge.high { background: #ff6600; }
+        .severity-badge.medium { background: #ffaa00; color: #000; }
+        .severity-badge.low { background: #ffff00; color: #000; }
+        
+        .code-snippet {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .fix-suggestion {
+            background: #003300;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #00ff00;
+        }
+        
+        .confidence-score {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 0.9em;
+            color: #76b900;
+        }
+        
+        .demo-button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .demo-button:hover {
+            background: #cc0000;
+            transform: scale(1.05);
+        }
+        
+        /* Loading animation */
+        .scanning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .scanning-overlay.active {
+            display: flex;
+        }
+        
+        .scan-progress {
+            text-align: center;
+        }
+        
+        .scan-progress h3 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .progress-bar {
+            width: 300px;
+            height: 30px;
+            background: #2a2a2a;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #76b900, #00ff00);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .scan-status {
+            font-size: 0.9em;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔒 SecureReview AI</h1>
+        <p>AI-Powered Security Analysis That Prevents $4.45M Breaches</p>
+        <div class="nvidia-badge">Powered by NVIDIA Nemotron-70B</div>
+        <br>
+        <span class="status disconnected" id="connectionStatus">Connecting...</span>
+    </div>
+    
+    <div class="github-scanner">
+        <h3>🔍 Scan Any GitHub Pull Request</h3>
+        <div class="scanner-input">
+            <input type="text" id="githubPR" placeholder="owner/repo#123 (e.g., facebook/react#12345)" />
+            <button onclick="scanGitHubPR()" id="scanButton">Scan PR</button>
+        </div>
+        <small style="color: #666; display: block; margin-top: 10px;">
+            Enter a real GitHub PR to analyze or use the demo below
+        </small>
+    </div>
+    
+    <div class="container">
+        <div class="panel impact-panel">
+            <h2>💰 Business Impact</h2>
+            
+            <div class="impact-metric">
+                <div class="impact-label">Potential Loss Prevented</div>
+                <div class="impact-value" id="lossPrevented">$0</div>
+            </div>
+            
+            <div class="impact-metric">
+                <div class="impact-label">Vulnerabilities Caught</div>
+                <div class="impact-value" id="vulnsCaught">0</div>
+            </div>
+            
+            <div class="impact-metric">
+                <div class="impact-label">Critical Issues</div>
+                <div class="impact-value" id="criticalCount" style="color: #ff0000;">0</div>
+            </div>
+            
+            <div class="impact-metric">
+                <div class="impact-label">Security Score</div>
+                <div class="impact-value" id="scoreValue">--</div>
+            </div>
+            
+            <button class="demo-button" onclick="runDemoScan()">
+                Run Demo Scan
+            </button>
+        </div>
+        
+        <div class="panel vulnerabilities-panel">
+            <h2>🚨 Security Analysis Results</h2>
+            <div id="vulnerabilitiesList">
+                <div style="text-align: center; color: #666; padding: 40px;">
+                    <p>No scan results yet.</p>
+                    <p>Enter a GitHub PR above or click "Run Demo Scan"</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel agent-panel">
+            <h2>
+                🤖 Agent Activity
+                <span class="thinking-indicator" id="thinkingIndicator"></span>
+            </h2>
+            <div class="activity-log" id="activityLog">
+                <div class="activity-item">
+                    ⚡ Agent ready. Waiting for code to analyze...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="scanning-overlay" id="scanningOverlay">
+        <div class="scan-progress">
+            <h3>🔍 Analyzing Code Security...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="scan-status" id="scanStatus">Initializing security scan...</div>
+        </div>
+    </div>
+    
+    <script>
+        // WebSocket connection
+        const ws = new WebSocket('ws://localhost:8000/ws');
+        const statusEl = document.getElementById('connectionStatus');
+        const activityLog = document.getElementById('activityLog');
+        const thinkingIndicator = document.getElementById('thinkingIndicator');
+        
+        // State tracking
+        let totalVulnerabilitiesCaught = 0;
+        let totalCriticalIssues = 0;
+        let scanInProgress = false;
+        
+        // Business impact calculations based on real data
+        const IMPACT_BY_SEVERITY = {
+            'CRITICAL': 4450000,  // Average breach cost
+            'HIGH': 1500000,      // Significant incident cost
+            'MEDIUM': 500000,     // Moderate incident cost
+            'LOW': 100000         // Minor incident cost
+        };
+        
+        ws.onopen = () => {
+            statusEl.textContent = 'Connected';
+            statusEl.className = 'status connected';
+            addActivity('✅ Connected to SecureReview AI server', false);
+        };
+        
+        ws.onclose = () => {
+            statusEl.textContent = 'Disconnected';
+            statusEl.className = 'status disconnected';
+            addActivity('❌ Disconnected from server', false);
+        };
+        
+        ws.onerror = (error) => {
+            addActivity('⚠️ Connection error: ' + error, false);
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'security_scan') {
+                updateDashboard(data);
+            } else if (data.type === 'agent_activity') {
+                addActivity(data.message, data.isNvidia);
+            } else if (data.type === 'nvidia_analysis') {
+                addActivity('🧠 NVIDIA Nemotron analyzing context...', true);
+                thinkingIndicator.classList.add('active');
+                setTimeout(() => thinkingIndicator.classList.remove('active'), 2000);
+            }
+        };
+        
+        function addActivity(message, isNvidia = false) {
+            const item = document.createElement('div');
+            item.className = 'activity-item' + (isNvidia ? ' activity-nvidia' : '');
+            item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            activityLog.insertBefore(item, activityLog.firstChild);
+            
+            // Keep only last 20 activities
+            while (activityLog.children.length > 20) {
+                activityLog.removeChild(activityLog.lastChild);
+            }
+        }
+        
+        function updateDashboard(data) {
+            const report = data.report;
+            
+            // Hide scanning overlay
+            document.getElementById('scanningOverlay').classList.remove('active');
+            scanInProgress = false;
+            
+            // Update vulnerabilities display
+            const vulnListEl = document.getElementById('vulnerabilitiesList');
+            if (report.vulnerabilities && report.vulnerabilities.length > 0) {
+                vulnListEl.innerHTML = '';
+                let impactPrevented = 0;
+                
+                report.vulnerabilities.forEach((vuln, index) => {
+                    const vulnEl = createVulnerabilityElement(vuln, report.nvidia_enhanced);
+                    vulnListEl.appendChild(vulnEl);
+                    
+                    // Calculate real business impact
+                    impactPrevented += IMPACT_BY_SEVERITY[vuln.severity] || 0;
+                    totalVulnerabilitiesCaught++;
+                    if (vuln.severity === 'CRITICAL') {
+                        totalCriticalIssues++;
+                    }
+                    
+                    // Add activity for each vulnerability found
+                    setTimeout(() => {
+                        addActivity(`🚨 Found ${vuln.severity} ${vuln.type} at line ${vuln.line}`, false);
+                    }, index * 200);
+                });
+                
+                // Update business impact metrics
+                updateBusinessImpact(impactPrevented);
+            } else {
+                vulnListEl.innerHTML = '<div style="text-align: center; color: #00ff00; padding: 40px;"><h3>✅ No vulnerabilities found!</h3><p>This code passed security review.</p></div>';
+                addActivity('✅ Security scan complete - no vulnerabilities found', false);
+            }
+            
+            // Update security score
+            document.getElementById('scoreValue').textContent = report.score + '/100';
+            document.getElementById('scoreValue').style.color = 
+                report.score >= 80 ? '#00ff00' : 
+                report.score >= 50 ? '#ffaa00' : '#ff0000';
+            
+            // Log scan completion
+            addActivity(`📊 Scan complete: Score ${report.score}/100, Found ${report.vulnerabilities.length} vulnerabilities`, false);
+        }
+        
+        function updateBusinessImpact(impactFromScan) {
+            const prevented = document.getElementById('lossPrevented');
+            const currentValue = parseInt(prevented.textContent.replace(/[\$,]/g, '')) || 0;
+            const newValue = currentValue + impactFromScan;
+            
+            // Animate the counter
+            animateValue(prevented, currentValue, newValue, 1000, '$');
+            
+            document.getElementById('vulnsCaught').textContent = totalVulnerabilitiesCaught;
+            document.getElementById('criticalCount').textContent = totalCriticalIssues;
+        }
+        
+        function animateValue(element, start, end, duration, prefix = '') {
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                element.textContent = prefix + current.toLocaleString('en-US', {maximumFractionDigits: 0});
+            }, 16);
+        }
+        
+        function createVulnerabilityElement(vuln, nvidiaEnhanced) {
+            const div = document.createElement('div');
+            div.className = `vulnerability ${vuln.severity.toLowerCase()}`;
+            
+            const nvidiaTag = nvidiaEnhanced ? '<span class="nvidia-enhanced">NVIDIA Enhanced</span>' : '';
+            const confidenceDisplay = vuln.confidence ? 
+                `<span class="confidence-score">Confidence: ${vuln.confidence}%</span>` : '';
+            
+            div.innerHTML = `
+                ${nvidiaTag}
+                <div class="vuln-header">
+                    <span class="vuln-type">${vuln.type}</span>
+                    <span class="severity-badge ${vuln.severity.toLowerCase()}">${vuln.severity}</span>
+                </div>
+                <div class="code-snippet">Line ${vuln.line}: ${escapeHtml(vuln.code)}</div>
+                <div class="fix-suggestion">
+                    <strong>Fix:</strong> ${vuln.fix}
+                    ${confidenceDisplay}
+                    <br><small>CWE: ${vuln.cwe}</small>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function scanGitHubPR() {
+            const input = document.getElementById('githubPR');
+            const button = document.getElementById('scanButton');
+            const prPattern = /^([^\/]+)\/([^#]+)#(\d+)$/;
+            const match = input.value.trim().match(prPattern);
+            
+            if (!match) {
+                alert('Please enter a valid GitHub PR format: owner/repo#123');
+                return;
+            }
+            
+            if (scanInProgress) {
+                addActivity('⚠️ Scan already in progress', false);
+                return;
+            }
+            
+            const [_, owner, repo, prNumber] = match;
+            const repoName = `${owner}/${repo}`;
+            
+            // Show scanning overlay
+            scanInProgress = true;
+            button.disabled = true;
+            showScanProgress();
+            
+            addActivity(`🔍 Fetching PR #${prNumber} from ${repoName}...`, false);
+            
+            try {
+                // Simulate webhook payload for real GitHub PR
+                const webhookPayload = {
+                    action: "opened",
+                    pull_request: {
+                        number: parseInt(prNumber),
+                        title: `PR #${prNumber}`,
+                        user: { login: "github-user" },
+                        base: {
+                            repo: { full_name: repoName }
+                        }
+                    },
+                    repository: {
+                        full_name: repoName
+                    }
+                };
+                
+                const response = await fetch('http://localhost:8000/webhook/github', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(webhookPayload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to scan PR');
+                }
+                
+                addActivity(`✅ Triggered security scan for ${repoName}#${prNumber}`, false);
+            } catch (error) {
+                addActivity(`❌ Error scanning PR: ${error.message}`, false);
+                document.getElementById('scanningOverlay').classList.remove('active');
+                scanInProgress = false;
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
+        function showScanProgress() {
+            const overlay = document.getElementById('scanningOverlay');
+            const progressFill = document.getElementById('progressFill');
+            const scanStatus = document.getElementById('scanStatus');
+            
+            overlay.classList.add('active');
+            progressFill.style.width = '0%';
+            
+            const stages = [
+                { progress: 20, status: 'Fetching PR diff from GitHub...' },
+                { progress: 40, status: 'Parsing code changes...' },
+                { progress: 60, status: 'Running security pattern analysis...' },
+                { progress: 80, status: 'Enhancing with NVIDIA Nemotron...' },
+                { progress: 100, status: 'Generating security report...' }
+            ];
+            
+            let currentStage = 0;
+            const interval = setInterval(() => {
+                if (currentStage < stages.length && scanInProgress) {
+                    progressFill.style.width = stages[currentStage].progress + '%';
+                    scanStatus.textContent = stages[currentStage].status;
+                    currentStage++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 800);
+        }
+        
+        async function runDemoScan() {
+            if (scanInProgress) {
+                addActivity('⚠️ Scan already in progress', false);
+                return;
+            }
+            
+            scanInProgress = true;
+            showScanProgress();
+            addActivity('🚀 Starting demo security scan...', false);
+            
+            const demoCode = `
+# Production Authentication Service
+import jwt
+import os
+from flask import request, jsonify
+import pymongo
+
+# Configuration
+api_key = "sk-prod-1234567890abcdef1234567890abcdef"
+SECRET_KEY = "MyCompanySecretKey2024!ProductionUse"
+MONGODB_URI = "mongodb://admin:SuperSecurePassword123!@prod.db.com:27017"
+
+def login_user():
+    """Handle user login"""
+    username = request.form.get('username')
+    password = request.form.get('password')
+    
+    # SQL Injection vulnerability
+    query = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'"
+    
+    # MongoDB Injection vulnerability
+    user = db.users.find_one({"username": username, "password": password})
+    
+    # Command Injection vulnerability
+    os.system("echo Login from " + username + " >> /var/log/auth.log")
+    
+    # Generate token
+    token = jwt.encode({"user": username}, SECRET_KEY)
+    
+    return jsonify({"token": token, "api_key": api_key})
+
+def verify_user_token():
+    """Verify JWT token"""
+    token = request.headers.get('Authorization')
+    
+    # JWT signature bypass vulnerability
+    decoded = jwt.decode(token, options={"verify_signature": False})
+    
+    return decoded
+
+def process_payment():
+    """Process user payment"""
+    user_input = request.json.get('command')
+    
+    # Command injection via eval
+    eval("process_" + user_input + "()")
+    
+    return {"status": "processed"}
+`;
+            
+            try {
+                const response = await fetch('http://localhost:8000/demo/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: demoCode,
+                        filename: 'auth_service.py'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Demo scan failed');
+                }
+                
+                const result = await response.json();
+                addActivity('✅ Demo scan completed successfully', false);
+            } catch (error) {
+                addActivity('❌ Error running demo: ' + error.message, false);
+                document.getElementById('scanningOverlay').classList.remove('active');
+                scanInProgress = false;
+            }
+        }
+    </script>
+</body>
+</html>

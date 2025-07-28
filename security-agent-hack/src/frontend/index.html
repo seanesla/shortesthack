@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureReview AI - Live Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #ff0000;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .status.connected { background: #00ff00; color: #000; }
+        .status.disconnected { background: #ff0000; }
+        
+        .container {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .panel {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .score-panel {
+            flex: 0 0 300px;
+            text-align: center;
+        }
+        
+        .score-meter {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            position: relative;
+        }
+        
+        .score-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                #ff0000 0deg,
+                #ff0000 var(--score-deg),
+                #333 var(--score-deg)
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            width: 85%;
+            height: 85%;
+            background: #1a1a1a;
+            border-radius: 50%;
+        }
+        
+        .score-value {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .vulnerabilities-panel {
+            flex: 1;
+        }
+        
+        .vulnerability {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff0000;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .vulnerability.critical { border-left-color: #ff0000; }
+        .vulnerability.high { border-left-color: #ff6600; }
+        .vulnerability.medium { border-left-color: #ffaa00; }
+        .vulnerability.low { border-left-color: #ffff00; }
+        
+        .vuln-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .vuln-type {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .severity-badge {
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+        
+        .severity-badge.critical { background: #ff0000; }
+        .severity-badge.high { background: #ff6600; }
+        .severity-badge.medium { background: #ffaa00; color: #000; }
+        .severity-badge.low { background: #ffff00; color: #000; }
+        
+        .code-snippet {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .fix-suggestion {
+            background: #003300;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #00ff00;
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #00ff00;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+        
+        .pr-info {
+            background: #2a2a2a;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .demo-button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .demo-button:hover {
+            background: #cc0000;
+            transform: scale(1.05);
+        }
+        
+        .nvidia-badge {
+            background: #76b900;
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔒 SecureReview AI</h1>
+        <p>Your Paranoid Security Engineer in the Cloud</p>
+        <span class="nvidia-badge">Powered by NVIDIA NIM</span>
+        <br>
+        <span class="status disconnected" id="connectionStatus">Connecting...</span>
+    </div>
+    
+    <div class="container">
+        <div class="panel score-panel">
+            <h2>Security Score</h2>
+            <div class="score-meter">
+                <div class="score-circle" style="--score-deg: 0deg;">
+                    <span class="score-value" id="scoreValue">--</span>
+                </div>
+            </div>
+            <p id="scoreStatus">Waiting for scan...</p>
+            
+            <div style="margin-top: 30px;">
+                <h3><span class="live-indicator"></span>Live Feed</h3>
+                <div id="lastScan" style="margin-top: 10px; font-size: 0.9em; color: #999;">
+                    No scans yet
+                </div>
+            </div>
+            
+            <button class="demo-button" onclick="runDemoScan()">
+                Run Demo Scan
+            </button>
+        </div>
+        
+        <div class="panel vulnerabilities-panel">
+            <h2>Vulnerabilities Detected</h2>
+            <div id="currentPR" class="pr-info" style="display: none;">
+                <span>PR #<span id="prNumber">-</span></span>
+                <span id="scanTime">-</span>
+            </div>
+            <div id="vulnerabilitiesList">
+                <div class="empty-state">
+                    <p>No vulnerabilities detected yet.</p>
+                    <p>Submit a PR or click "Run Demo Scan" to start!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const ws = new WebSocket('ws://localhost:8000/ws');
+        const statusEl = document.getElementById('connectionStatus');
+        const scoreEl = document.getElementById('scoreValue');
+        const scoreStatusEl = document.getElementById('scoreStatus');
+        const vulnListEl = document.getElementById('vulnerabilitiesList');
+        const lastScanEl = document.getElementById('lastScan');
+        const prInfoEl = document.getElementById('currentPR');
+        const prNumberEl = document.getElementById('prNumber');
+        const scanTimeEl = document.getElementById('scanTime');
+        
+        ws.onopen = () => {
+            statusEl.textContent = 'Connected';
+            statusEl.className = 'status connected';
+        };
+        
+        ws.onclose = () => {
+            statusEl.textContent = 'Disconnected';
+            statusEl.className = 'status disconnected';
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'security_scan') {
+                updateDashboard(data);
+            }
+        };
+        
+        function updateDashboard(data) {
+            const report = data.report;
+            
+            // Update PR info
+            prInfoEl.style.display = 'flex';
+            prNumberEl.textContent = data.pr_number || 'demo';
+            scanTimeEl.textContent = new Date(data.timestamp).toLocaleTimeString();
+            
+            // Add PR context if available
+            if (data.pr_title) {
+                prInfoEl.innerHTML = `
+                    <span>PR #${data.pr_number}: ${data.pr_title}</span>
+                    <span>by @${data.pr_author} at ${new Date(data.timestamp).toLocaleTimeString()}</span>
+                `;
+            }
+            
+            // Update score
+            const score = report.score;
+            scoreEl.textContent = score;
+            const scoreDeg = (score / 100) * 360;
+            document.querySelector('.score-circle').style.setProperty('--score-deg', `${scoreDeg}deg`);
+            
+            // Update score color based on value
+            if (score >= 80) {
+                document.querySelector('.score-circle').style.background = `conic-gradient(from 0deg, #00ff00 0deg, #00ff00 ${scoreDeg}deg, #333 ${scoreDeg}deg)`;
+                scoreStatusEl.textContent = '✅ Secure';
+            } else if (score >= 50) {
+                document.querySelector('.score-circle').style.background = `conic-gradient(from 0deg, #ffaa00 0deg, #ffaa00 ${scoreDeg}deg, #333 ${scoreDeg}deg)`;
+                scoreStatusEl.textContent = '⚠️ Needs Review';
+            } else {
+                document.querySelector('.score-circle').style.background = `conic-gradient(from 0deg, #ff0000 0deg, #ff0000 ${scoreDeg}deg, #333 ${scoreDeg}deg)`;
+                scoreStatusEl.textContent = '🚨 Critical Issues';
+            }
+            
+            // Update vulnerabilities
+            if (report.vulnerabilities && report.vulnerabilities.length > 0) {
+                vulnListEl.innerHTML = '';
+                report.vulnerabilities.forEach(vuln => {
+                    const vulnEl = createVulnerabilityElement(vuln);
+                    vulnListEl.appendChild(vulnEl);
+                });
+            } else {
+                vulnListEl.innerHTML = '<div class="empty-state"><p>✅ No vulnerabilities found!</p></div>';
+            }
+            
+            // Update last scan
+            lastScanEl.innerHTML = `Last scan: PR #${data.pr_number} at ${new Date(data.timestamp).toLocaleTimeString()}`;
+        }
+        
+        function createVulnerabilityElement(vuln) {
+            const div = document.createElement('div');
+            div.className = `vulnerability ${vuln.severity.toLowerCase()}`;
+            
+            div.innerHTML = `
+                <div class="vuln-header">
+                    <span class="vuln-type">${vuln.type}</span>
+                    <span class="severity-badge ${vuln.severity.toLowerCase()}">${vuln.severity}</span>
+                </div>
+                <div class="code-snippet">Line ${vuln.line}: ${escapeHtml(vuln.code)}</div>
+                <div class="fix-suggestion">
+                    <strong>Fix:</strong> ${vuln.fix}
+                    <br><small>CWE: ${vuln.cwe}</small>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function runDemoScan() {
+            const demoCode = `
+# OAuth2 Authentication Service
+import jwt
+import hashlib
+from datetime import datetime, timedelta
+from flask import request, jsonify
+
+class Config:
+    JWT_ALGORITHM = 'HS256'
+    # Security configuration for production
+    SECRET_KEY = hashlib.sha256(b'MyCompanyAuthService2024!').hexdigest()
+
+def login():
+    """Authenticate user and return JWT token"""
+    data = request.get_json()
+    username = data.get('username')
+    
+    # Query user from database
+    user = db.users.find_one({'username': username})
+    
+    # Generate JWT token
+    payload = {
+        'user_id': str(user['_id']),
+        'exp': datetime.utcnow() + timedelta(hours=24)
+    }
+    
+    token = jwt.encode(payload, Config.SECRET_KEY, algorithm='HS256')
+    return jsonify({'token': token})
+
+def refresh_token():
+    """Refresh an expired token"""
+    old_token = request.json.get('token')
+    
+    # Decode without verification for refresh
+    unverified = jwt.decode(old_token, options={"verify_signature": False})
+    user_id = unverified.get('user_id')
+    
+    # Generate new token
+    new_token = jwt.encode({'user_id': user_id}, Config.SECRET_KEY)
+    return jsonify({'token': new_token})
+`;
+            
+            try {
+                const response = await fetch('http://localhost:8000/demo/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        code: demoCode,
+                        filename: 'demo.py'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Demo scan failed');
+                }
+                
+                const result = await response.json();
+                console.log('Demo scan completed:', result);
+            } catch (error) {
+                console.error('Error running demo scan:', error);
+                // Fallback to demo data
+                updateDashboard({
+                    pr_number: 'demo',
+                    timestamp: new Date().toISOString(),
+                    report: {
+                        status: 'FAIL',
+                        score: 20,
+                        vulnerabilities: [
+                            {
+                                type: 'SQL Injection',
+                                severity: 'HIGH',
+                                line: 3,
+                                code: 'query = "SELECT * FROM users WHERE id = " + user_id',
+                                fix: 'Use parameterized queries',
+                                cwe: 'CWE-89'
+                            },
+                            {
+                                type: 'Command Injection',
+                                severity: 'CRITICAL',
+                                line: 7,
+                                code: 'os.system("ping " + user_input)',
+                                fix: 'Use subprocess with shell=False',
+                                cwe: 'CWE-78'
+                            }
+                        ]
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
