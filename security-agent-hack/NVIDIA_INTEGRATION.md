@@ -2,8 +2,8 @@
 
 ## 🚀 Key NVIDIA Technologies Used
 
-### 1. **Nemotron-70B Reasoning Model**
-- Model: `llama-3.3-nemotron-70b-instruct`
+### 1. **Nemotron-49B Reasoning Model**
+- Model: `llama-3.3-nemotron-super-49b-v1`
 - Access: build.nvidia.com/models (free serverless API)
 - Purpose: Advanced reasoning for vulnerability analysis
 
@@ -56,7 +56,7 @@ curl https://integrate.api.nvidia.com/v1/chat/completions \
 
 ## 💡 Presentation Talking Points
 
-1. **"We leverage NVIDIA's latest Nemotron-70B reasoning model"**
+1. **"We leverage NVIDIA's latest Nemotron-49B reasoning model"**
    - Advanced AI understanding of code context
    - Not just pattern matching - actual reasoning
 

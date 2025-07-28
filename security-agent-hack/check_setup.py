@@ -65,7 +65,7 @@ def check_setup():
     print("- The app works NOW with mock data")
     print("- API keys enable real GitHub/NVIDIA integration")
     print("- Focus on the demo impact, not the implementation")
-    print("- Mention 'Powered by NVIDIA Nemotron-70B'")
+    print("- Mention 'Powered by NVIDIA Nemotron-49B'")
 
 if __name__ == "__main__":
     check_setup()

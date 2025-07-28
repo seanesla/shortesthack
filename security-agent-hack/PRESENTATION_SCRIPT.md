@@ -3,7 +3,7 @@
 ## Opening (30 seconds)
 "Every 11 seconds, a company loses $4.45 million to a security breach. Most start with a single line of vulnerable code that slipped through review.
 
-We built SecureReview AI - an autonomous agent powered by NVIDIA's Nemotron-70B reasoning model that thinks like your most paranoid security engineer."
+We built SecureReview AI - an autonomous agent powered by NVIDIA's Nemotron-49B reasoning model that thinks like your most paranoid security engineer."
 
 ## Live Demo (90 seconds)
 
@@ -29,7 +29,7 @@ We built SecureReview AI - an autonomous agent powered by NVIDIA's Nemotron-70B 
 
 "We leveraged three key NVIDIA technologies:
 
-1. **Nemotron-70B** via build.nvidia.com - providing advanced reasoning that reduces false positives by 75%
+1. **Nemotron-49B** via build.nvidia.com - providing advanced reasoning that reduces false positives by 75%
 
 2. **NeMo Agent Toolkit patterns** - our orchestrator coordinates between fast pattern matching and deep AI analysis
 
